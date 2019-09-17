@@ -445,7 +445,7 @@ LLAPI llapi
 LLAPI llapi2
 (
 	.CLK_50M(CLK_50M),
-	.LLAPI_SYNC(Vsync),
+	.LLAPI_SYNC(VSync),
 	.IO_LATCH_IN(USER_IN[4]),
 	.IO_LATCH_OUT(llapi_latch_o2),
 	.IO_DATA_IN(USER_IN[5]),
