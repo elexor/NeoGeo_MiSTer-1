@@ -483,8 +483,21 @@ wire [15:0] joy_ll_b = { 4'b0000,
 
 wire llapi_osd = (llapi_buttons[26] & llapi_buttons[5] & llapi_buttons[0]) || (llapi_buttons2[26] & llapi_buttons2[5] & llapi_buttons2[0]);
 
-wire [15:0] joy_a = use_llapi  ? joy_ll_a : joystick_0;
-wire [15:0] joy_b = use_llapi2 ? joy_ll_b : joystick_1;
+wire [15:0] joy_a;
+wire [15:0] joy_b;
+// if LLAPI is enabled, shift USB controllers to next available player slot
+always_comb begin
+        if (use_llapi & use_llapi2) begin
+                joy_a = joy_ll_a;
+                joy_b = joy_ll_b;
+        end else if (use_llapi ^ use_llapi2) begin
+                joy_a = use_llapi  ? joy_ll_a : joystick_0;
+                joy_b = use_llapi2 ? joy_ll_b : joystick_0;
+        end else begin
+                joy_a = joystick_0;
+                joy_b = joystick_1;
+        end
+end
 
 //////////////////   Her Majesty   ///////////////////
 
