@@ -469,17 +469,71 @@ wire use_llapi2 = llapi_en2 && llapi_select;
 
 //	"J1,A,B,C,D,Start,Select,Coin,ABC;"
 
-wire [15:0] joy_ll_a = { 4'b0000,
-	llapi_buttons[6], llapi_buttons[4], llapi_buttons[4], llapi_buttons[5],
-	llapi_buttons[3], llapi_buttons[2], llapi_buttons[1], llapi_buttons[0],
-	llapi_buttons[27], llapi_buttons[26], llapi_buttons[25], llapi_buttons[24]
-};
+wire [15:0] joy_ll_a;
+always_comb begin
+	// Layout for Saturn controllers, since there is no select button
+	if (llapi_type == 3 || llapi_type == 8) begin
+		joy_ll_a = { 4'b0000,
+			llapi_buttons[9],  llapi_buttons[8],  llapi_buttons[8],  llapi_buttons[5], // ABC, Coin, Select, Start
+			llapi_buttons[6],  llapi_buttons[7],  llapi_buttons[1],  llapi_buttons[0], // D,   C,    B,      A
+			llapi_buttons[27], llapi_buttons[26], llapi_buttons[25], llapi_buttons[24] // dpad
+		};
+	// 6 button controller mapping
+	end else if(llapi_type == 20 || llapi_type == 21 || llapi_type == 54 || llapi_type == 11) begin
+		joy_ll_a = { 4'b0000,
+			llapi_buttons[2],  llapi_buttons[4],  llapi_buttons[4],  llapi_buttons[5], // ABC, Coin, Select, Start
+			llapi_buttons[6],  llapi_buttons[7],  llapi_buttons[1],  llapi_buttons[0], // D,   C,    B,      A
+			llapi_buttons[27], llapi_buttons[26], llapi_buttons[25], llapi_buttons[24] // dpad
+		};
+	// Neo Geo controller mapping
+	end else if(llapi_type == 49) begin
+		joy_ll_a = { 4'b0000,
+			llapi_buttons[6],  llapi_buttons[4],  llapi_buttons[4],  llapi_buttons[5], // ABC, Coin, Select, Start
+			llapi_buttons[3],  llapi_buttons[2],  llapi_buttons[1],  llapi_buttons[0], // D,   C,    B,      A
+			llapi_buttons[27], llapi_buttons[26], llapi_buttons[25], llapi_buttons[24] // dpad
+		};
+	// SNES controller mapping and default 
+	end else begin
+		joy_ll_a = { 4'b0000,
+			llapi_buttons[7],  llapi_buttons[4],  llapi_buttons[4],  llapi_buttons[5], // ABC, Coin, Select, Start
+			llapi_buttons[1],  llapi_buttons[3],  llapi_buttons[0],  llapi_buttons[2], // D,   C,    B,      A
+			llapi_buttons[27], llapi_buttons[26], llapi_buttons[25], llapi_buttons[24] // dpad
+		};
+	end
+end
 
-wire [15:0] joy_ll_b = { 4'b0000,
-	llapi_buttons2[6], llapi_buttons2[4], llapi_buttons2[4], llapi_buttons2[5],
-	llapi_buttons2[3], llapi_buttons2[2], llapi_buttons2[1], llapi_buttons2[0],
-	llapi_buttons2[27], llapi_buttons2[26], llapi_buttons2[25], llapi_buttons2[24]
-};
+wire [15:0] joy_ll_b;
+always_comb begin
+	// Layout for Saturn controllers, since there is no select button
+	if (llapi_type2 == 3 || llapi_type2 == 8) begin
+		joy_ll_b = { 4'b0000,
+			llapi_buttons2[9],  llapi_buttons2[8],  llapi_buttons2[8],  llapi_buttons2[5], // ABC, Coin, Select, Start
+			llapi_buttons2[6],  llapi_buttons2[7],  llapi_buttons2[1],  llapi_buttons2[0], // D,   C,    B,      A
+			llapi_buttons2[27], llapi_buttons2[26], llapi_buttons2[25], llapi_buttons2[24] // dpad
+		};
+	// 6 button controller mapping
+	end else if(llapi_type2 == 20 || llapi_type2 == 21 || llapi_type2 == 54 || llapi_type2 == 11) begin
+		joy_ll_b = { 4'b0000,
+			llapi_buttons2[2],  llapi_buttons2[4],  llapi_buttons2[4],  llapi_buttons2[5], // ABC, Coin, Select, Start
+			llapi_buttons2[6],  llapi_buttons2[7],  llapi_buttons2[1],  llapi_buttons2[0], // D,   C,    B,      A
+			llapi_buttons2[27], llapi_buttons2[26], llapi_buttons2[25], llapi_buttons2[24] // dpad
+		};
+	// Neo Geo controller mapping
+	end else if(llapi_type2 == 49) begin
+		joy_ll_b = { 4'b0000,
+			llapi_buttons2[6],  llapi_buttons2[4],  llapi_buttons2[4],  llapi_buttons2[5], // ABC, Coin, Select, Start
+			llapi_buttons2[3],  llapi_buttons2[2],  llapi_buttons2[1],  llapi_buttons2[0], // D,   C,    B,      A
+			llapi_buttons2[27], llapi_buttons2[26], llapi_buttons2[25], llapi_buttons2[24] // dpad
+		};
+	// SNES controller mapping and default 
+	end else begin
+		joy_ll_b = { 4'b0000,
+			llapi_buttons2[7],  llapi_buttons2[4],  llapi_buttons2[4],  llapi_buttons2[5], // ABC, Coin, Select, Start
+			llapi_buttons2[1],  llapi_buttons2[3],  llapi_buttons2[0],  llapi_buttons2[2], // D,   C,    B,      A
+			llapi_buttons2[27], llapi_buttons2[26], llapi_buttons2[25], llapi_buttons2[24] // dpad
+		};
+	end
+end
 
 wire llapi_osd = (llapi_buttons[26] & llapi_buttons[5] & llapi_buttons[0]) || (llapi_buttons2[26] & llapi_buttons2[5] & llapi_buttons2[0]);
 
