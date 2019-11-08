@@ -460,7 +460,7 @@ LLAPI llapi2
 reg llapi_button_pressed, llapi_button_pressed2;
 
 always @(posedge clk_sys) begin
-        if (reset) begin
+        if (nRESET) begin
                 llapi_button_pressed  <= 0;
                 llapi_button_pressed2 <= 0;
         end else if (|llapi_buttons)
