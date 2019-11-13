@@ -226,6 +226,12 @@ localparam CONF_STR = {
 	"H3OQ,ADPCMA,ON,OFF;",
 	"H3OR,ADPCMB,ON,OFF;",
 	"H3OS,PSG,ON,OFF;",
+	"H3oP,ADPCMA CH 1,ON,OFF;",
+	"H3oQ,ADPCMA CH 2,ON,OFF;",
+	"H3oR,ADPCMA CH 3,ON,OFF;",
+	"H3oS,ADPCMA CH 4,ON,OFF;",
+	"H3oT,ADPCMA CH 5,ON,OFF;",
+	"H3oU,ADPCMA CH 6,ON,OFF;",
 	"H3-;",
 	"O12,System Type,Console(AES),Arcade(MVS);", //,CD,CDZ;",
 	"OM,BIOS,UniBIOS,Original;",
@@ -331,7 +337,7 @@ wire [15:0] joystick_1;
 wire  [1:0] buttons;
 wire [10:0] ps2_key;
 wire        forced_scandoubler;
-wire [31:0] status;
+wire [63:0] status;
 
 wire [64:0] rtc;
 
@@ -345,6 +351,7 @@ wire SYSTEM_MVS = (SYSTEM_TYPE == 2'd1);
 wire SYSTEM_CDx = SYSTEM_TYPE[1];
 
 wire [15:0] sdram_sz;
+wire [21:0] gamma_bus;
 
 hps_io #(.STRLEN($size(CONF_STR)>>3), .WIDE(1), .VDNUM(2)) hps_io
 (
@@ -363,7 +370,8 @@ hps_io #(.STRLEN($size(CONF_STR)>>3), .WIDE(1), .VDNUM(2)) hps_io
 
 	.RTC(rtc),
 	.sdram_sz(sdram_sz),
-	
+	.gamma_bus(gamma_bus),
+
 	// Loading signals
 	.ioctl_wr(ioctl_wr),
 	.ioctl_addr(ioctl_addr),
@@ -1706,8 +1714,6 @@ end
 	end
 
 	wire [7:0] YM2610_DOUT;
-	wire signed [15:0] ym2610_l;
-	wire signed [15:0] ym2610_r;
 
 	jt10 YM2610(
 		.rst(~nRESET),
@@ -1718,36 +1724,8 @@ end
 		.irq_n(nZ80INT),
 		.adpcma_addr(ADPCMA_ADDR), .adpcma_bank(ADPCMA_BANK), .adpcma_roe_n(nSDROE), .adpcma_data(ADPCMA_DATA),
 		.adpcmb_addr(ADPCMB_ADDR), .adpcmb_roe_n(nSDPOE), .adpcmb_data(SYSTEM_CDx ? 8'h08 : ADPCMB_DATA),	// CD has no ADPCM-B
-		.snd_right(snd_right), .snd_left(snd_left), .snd_enable(~{4{dbg_menu}} | ~status[28:25])
-//		.snd_right(ym2610_r), .snd_left(ym2610_l), .snd_enable(~status[28:25])
+		.snd_right(snd_right), .snd_left(snd_left), .snd_enable(~{4{dbg_menu}} | ~status[28:25]), .ch_enable(~status[62:57])
 	);
-/*
-// Remove DC offset already signed
-jt49_dcrm2 #(.sw(16), .ins(1)) dc_filter_l (
-	.clk  (CLK_8M),
-	.cen  (filter_cnt==0),
-	.rst  (~nRESET),
-	.dins (ym2610_l),
-	.dout (snd_left)
-);
-
-jt49_dcrm2 #(.sw(16), .ins(1)) dc_filter_r (
-	.clk  (CLK_8M),
-	.cen  (filter_cnt==0),
-	.rst  (~nRESET),
-	.dins (ym2610_r),
-	.dout (snd_right)
-);
-
-// Filter CE impacts frequency response
-reg [16:0] filter_cnt;
-always_ff @(posedge CLK_8M) begin
-	filter_cnt<= filter_cnt + 1'b1;
-	if (filter_cnt == 16'b1000_1111_1111_1111) begin // divisible by 36
-		filter_cnt<= filter_cnt + 1'b1;
-	end
-end
-*/
 	
 	 
 	// For Neo CD only
@@ -1897,11 +1875,11 @@ end
 		.VBlank_out(vblank)
 	);
 	
-	video_mixer #(.LINE_LENGTH(320), .HALF_DEPTH(0)) video_mixer
+	video_mixer #(.LINE_LENGTH(320), .HALF_DEPTH(0), .GAMMA(1)) video_mixer
 	(
 		.*,
 
-		.clk_sys(CLK_VIDEO),
+		.clk_vid(CLK_VIDEO),
 		.ce_pix(ce_pix),
 		.ce_pix_out(CE_PIXEL),
 
