@@ -275,6 +275,7 @@ pll pll(
 	.outclk_0(clk_sys),
 	.outclk_1(SDRAM_CLK),	// Phase shifted
 	.outclk_2(SDRAM2_CLK),	// Phase shifted
+	.outclk_3(CLK_VIDEO),
 	.locked(locked)
 );
 
@@ -1124,7 +1125,7 @@ end
 	
 	cpu_68k M68KCPU(
 		.CLK_24M(CLK_24M),
-		.nRESET(nRESET),
+		.nRESET(nRESET_WD),
 		.M68K_ADDR(M68K_ADDR),
 		.FX68K_DATAIN(FX68K_DATAIN), .FX68K_DATAOUT(FX68K_DATAOUT),
 		.nLDS(nLDS), .nUDS(nUDS), .nAS(nAS), .M68K_RW(M68K_RW),
@@ -1766,6 +1767,7 @@ end
 		.FIXMAP_ADDR(FIXMAP_ADDR)	// Extracted for NEO-CMC
 	);
 	
+	wire nRESET_WD;
 	neo_b1 B1(
 		.CLK(CLK_24M),	.CLK_6MB(CLK_6MB), .CLK_1HB(CLK_1HB),
 		.S1H1(S1H1),
@@ -1780,7 +1782,9 @@ end
 		.WE(WE), .CK(CK),
 		.TMS0(CHG), .LD1(LD1), .LD2(LD2), .SS1(SS1), .SS2(SS2),
 		.PA(PAL_RAM_ADDR),
-		.EN_FIX(FIX_EN)
+		.EN_FIX(FIX_EN),
+		.nRST(nRESET),
+		.nRESET(nRESET_WD)
 	);
 
 	spram #(13,16) PALRAM(
@@ -1795,7 +1799,7 @@ end
 	reg ce_pix;
 	reg [2:0] HBlank;
 	reg HBlank304;
-	always @(posedge clk_sys) begin
+	always @(posedge CLK_VIDEO) begin
 		reg old_clk;
 		reg [9:0] pxcnt;
 
@@ -1822,21 +1826,21 @@ end
 		reg [2:0] vbl;
 		reg [7:0] vblcnt, vspos;
 		
-		old_hs <= HSync;
-		if(~old_hs & HSync) begin
-			old_vbl <= nBNKB;
-			
-			if(~nBNKB) vblcnt <= vblcnt+1'd1;
-			if(old_vbl & ~nBNKB) vblcnt <= 0;
-			if(~old_vbl & nBNKB) vspos <= (vblcnt>>1) - 8'd7;
+		if(ce_pix) begin
+			old_hs <= HSync;
+			if(~old_hs & HSync) begin
+				old_vbl <= nBNKB;
+				
+				if(~nBNKB) vblcnt <= vblcnt+1'd1;
+				if(old_vbl & ~nBNKB) vblcnt <= 0;
+				if(~old_vbl & nBNKB) vspos <= (vblcnt>>1) - 8'd7;
 
-			{VSync,vbl} <= {vbl,1'b0};
-			if(vblcnt == vspos) {VSync,vbl} <= '1;
+				{VSync,vbl} <= {vbl,1'b0};
+				if(vblcnt == vspos) {VSync,vbl} <= '1;
+			end
 		end
 	end
 	
-
-	assign CLK_VIDEO = clk_sys;
 	assign VGA_SL = scale ? scale[1:0] - 1'd1 : 2'd0;
 	assign VGA_F1 = 0;
 
@@ -1854,7 +1858,7 @@ end
 	wire hs,vs,hblank,vblank;
 	video_cleaner video_cleaner
 	(
-		.clk_vid(clk_sys),
+		.clk_vid(CLK_VIDEO),
 		.ce_pix(ce_pix),
 
 		.R(~SHADOW ? R8 : {1'b0, R8[7:1]}),
